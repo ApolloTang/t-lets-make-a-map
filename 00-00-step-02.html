@@ -15,22 +15,38 @@ var width = 960,
 
 var svg = d3.select('body').append('svg').attr('width', width).attr('height', height);
 
-d3.json("./map-files/uk.json", drawMap00 )
+// Configure path generator to genearate marcator projection
+var projType_mercator = d3.geo.mercator();
+var pathGeneratorFn = d3.geo.path().projection(projType_mercator);
+
+// d3.json("./map-files/uk.json", drawMap00 );
+// d3.json("./map-files/uk.json", drawMap01 );
+d3.json("./map-files/uk.json", drawMap02 );
+
 
 function drawMap00 (error, uk) {
     if (error) return console.error(error);
 
-    // console.log(uk);
+    // Convert topojson to geoJSON
+    var geoJSON_uk = topojson.feature(uk, uk.objects.subunits );
 
-    // Configure path generator to genearate marcator projection
-    var projType_mercator = d3.geo.mercator();
-    var pathGeneratorFn = d3.geo.path().projection(projType_mercator);
+    // generate svg path
+    var path_uk = pathGeneratorFn( geoJSON_uk );
+
+    // append only one path element and set value of the 'd' attribute with
+    //     the output of pathGeneratorFn
+    svg.append('path').attr('d', function(){ return path_uk; })
+}
+
+// using datum()
+function drawMap01 (error, uk) {
+    if (error) return console.error(error);
 
     // Convert topojson to geoJSON
     var geoJSON_uk = topojson.feature(uk, uk.objects.subunits );
 
     svg.append('path')
-        .datum( geoJSON_uk )
+        .datum( geoJSON_uk )  // geoJSON is passed in here; with datum, there is no need to call enter()
         .attr('d', function(geoJSON){
             // generate svg path
             var path_uk = pathGeneratorFn( geoJSON );
@@ -38,20 +54,22 @@ function drawMap00 (error, uk) {
         })
 }
 
-// same as drawMap00, but not using datum
-function drawMap01 (error, uk) {
+// if using data()
+function drawMap02 (error, uk) {
     if (error) return console.error(error);
-
-    // Configure path generator to genearate marcator projection
-    var projType_mercator = d3.geo.mercator()
-    var pathGeneratorFn = d3.geo.path().projection(projType_mercator);
 
     // Convert topojson to geoJSON
     var geoJSON_uk = topojson.feature(uk, uk.objects.subunits );
-    // generate svg path
-    var path_uk = pathGeneratorFn( geoJSON_uk );
 
-    svg.append('path').attr('d', function(){ return path_uk; })
+    svg.selectAll('path')
+        .data( [geoJSON_uk]) // with data() you must pass in array
+        .enter()             // with data you will need to call enter()
+        .append('path')      // then append the enter() data into DOM
+        .attr('d', function(geoJSON){
+            // generate svg path
+            var path_uk = pathGeneratorFn( geoJSON );
+            return path_uk;
+        })
 }
 
 </script>
