@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+/* CSS goes here. */
+svg {
+    border: 1px solid red;
+}
+</style>
+<body>
+    <script src="http://localhost:8001/js/lib/d3-3.4.13.js" charset="utf-8"></script>
+    <script src="http://localhost:8001/js/lib/topojson.v2.min.js"></script>
+<script>
+
+var width = 800,
+    height = 800
+
+var svg = d3.select('body').append('svg')
+    .attr('width', width).attr('height', height);
+
+d3.json("./map-files/uk.json", drawMap00 )
+
+function drawMap00 (error, uk) {
+    if (error) return console.error(error);
+
+    // Mercator projection
+    var projType_01 = d3.geo.mercator()
+        .scale(100)
+        .translate([ 40, 433 ]);
+
+    // Albers projection
+    var projType_02 = d3.geo.albers()
+        .center([0, 55.4]) // set the center to 0°W 55.4°N
+        .rotate([4.4, 0])
+        .parallels([50, 60])
+        .scale(200)
+        .translate([width/2, height/2]);
+
+    // Albers projection but different scale
+    var projType_03 = d3.geo.albers()
+        .center([0, 55.4])
+        .rotate([4.4, 0])
+        .parallels([50, 60])
+        .scale(4000)
+        .translate([width / 2, height / 2]);
+
+    // var pathGeneratorFn = d3.geo.path().projection(projType_01);
+    // var pathGeneratorFn = d3.geo.path().projection(projType_02);
+    var pathGeneratorFn = d3.geo.path().projection(projType_03);
+
+    // Convert topojson to geoJSON
+    var geoJSON_uk = topojson.feature(uk, uk.objects.subunits );
+
+    svg.append('path')
+        .datum( geoJSON_uk )
+        .attr('d', function(geoJSON){
+            // generate svg path
+            var path_uk = pathGeneratorFn( geoJSON );
+            return path_uk;
+        })
+}
+
+</script>
